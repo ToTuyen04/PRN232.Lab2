@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using PRN232.Lab2.CoffeeStore.Repositories.Entity;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository;
+using PRN232.Lab2.CoffeeStore.Services.ExceptionHandler;
+using PRN232.Lab2.CoffeeStore.Services.Helpers;
 using PRN232.Lab2.CoffeeStore.Services.RequestModel;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
 using PRN232.Lab2.CoffeeStore.Services.Service.IService;
@@ -28,9 +31,23 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             _unitOfWork.Product.Add(obj);
         }
 
-        public Task<ProductResponse> AddAsync(ProductRequest obj)
+        public async Task<ProductResponse> AddAsync(ProductRequest obj)
         {
-            throw new NotImplementedException();
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj), "ProductRequest object cannot be null.");
+
+            //if (CheckProductNameExists(obj.Name))
+            bool check = HelperClass.CheckDuplicatedName(obj.Name, _unitOfWork.Product.GetAll());
+            if (check)
+                throw new ExceptionHandler.ValidationException($"Product name '{obj.Name}' already exists.");
+
+            var p = _mapper.Map<Product>(obj);
+            await _unitOfWork.Product.AddAsync(p);
+            await _unitOfWork.SaveAsync();
+
+            var loadedPro = await _unitOfWork.Product.GetAsync(pr => pr.ProductId == p.ProductId);
+            var response = _mapper.Map<ProductResponse>(p);
+            return response;
         }
 
         public void Delete(Product obj)
@@ -38,9 +55,10 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             _unitOfWork.Product.Remove(obj);
         }
 
-        public Task DeleteAsync(Product obj)
+        public async Task DeleteAsync(Product obj)
         {
-            throw new NotImplementedException();
+            _unitOfWork.Product.Remove(obj);
+            await _unitOfWork.SaveAsync();
         }
 
         public IEnumerable<Product> GetAll()
@@ -95,19 +113,25 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             _unitOfWork.Product.Update(obj);
         }
 
-        public async Task<ProductResponse> UpdateAsync(int id, ProductRequest obj)
+        public async Task<ProductResponse> UpdateAsync(int id, ProductRequest request)
         {
-            Product product = _unitOfWork.Product.Get(p => p.ProductId == id);
-            if (product == null)
-            {
-                //Exception
-                throw new Exception("Product not found");
-            }
-            _mapper.Map(obj, product);
-            _unitOfWork.Product.Update(product);
+            var obj = await _unitOfWork.Product.GetAsync(p => p.ProductId == id);
+            if (obj == null)
+                throw new NotFoundException($"Product with id {id} not found");
+
+            var duplicated = _unitOfWork.Product.Get(p => p.Name == request.Name && p.ProductId != id);
+            if (duplicated != null)
+                throw new ExceptionHandler.ValidationException($"Product name '{request.Name}' already exists.");
+
+            _mapper.Map(request, obj);
+
+            _unitOfWork.Product.Update(obj);
             await _unitOfWork.SaveAsync();
-            var response = _mapper.Map<ProductResponse>(product);
-            return response;
+
+            //load lại product để lấy category
+            var loadedPro = await _unitOfWork.Product.GetAsync(p => p.ProductId == id);
+
+            return _mapper.Map<ProductResponse>(loadedPro);
 
         }
     }
