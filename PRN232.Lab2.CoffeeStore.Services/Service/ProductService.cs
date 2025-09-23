@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Azure.Core;
+using Microsoft.AspNetCore.Http.HttpResults;
 using PRN232.Lab2.CoffeeStore.Repositories.Entity;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository;
 using PRN232.Lab2.CoffeeStore.Services.ExceptionHandler;
@@ -94,7 +95,10 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
 
         public Product GetById(int id)
         {
-            return _unitOfWork.Product.Get(p => p.ProductId == id);
+            var product = _unitOfWork.Product.Get(p => p.ProductId == id);
+            if (product == null)
+                throw new NotFoundException($"Product with id #{id} not found");
+            return product;
         }
 
         public async Task<ProductResponse> GetByIdAsync(int id)
@@ -103,7 +107,7 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             if (product == null)
             {
                 //Exception
-                throw new Exception("Product not found");
+                throw new NotFoundException($"Product with id #{id} not found");
             }
             return _mapper.Map<ProductResponse>(product);
         }

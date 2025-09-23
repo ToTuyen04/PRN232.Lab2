@@ -5,6 +5,7 @@ using PRN232.Lab2.CoffeeStore.Repositories.Context;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository;
 using PRN232.Lab2.CoffeeStore.Services;
+using PRN232.Lab2.CoffeeStore.Services.ExceptionHandler;
 using PRN232.Lab2.CoffeeStore.Services.Mapper;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
 using PRN232.Lab2.CoffeeStore.Services.Service;
@@ -48,7 +49,10 @@ namespace PRN232.Lab2.CoffeeStore.API
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SchemaFilter<CustomDateTimeSchemaFilter>();
+            });
 
             var app = builder.Build();
 
@@ -58,6 +62,8 @@ namespace PRN232.Lab2.CoffeeStore.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
             app.UseHttpsRedirection();
 
