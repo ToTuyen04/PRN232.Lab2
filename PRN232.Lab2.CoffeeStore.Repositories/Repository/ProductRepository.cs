@@ -56,91 +56,39 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Repository
                 return (products, totalCount);
             } else
             {
-                var items = await ApplySelect(query, select);
+                var items = await ApplySelectFields(query, select);
                 return (items, totalCount);
             }
         }
 
-        private async Task<IEnumerable<object>> ApplySelect(IQueryable<Product> query, string select)
+        private async Task<IEnumerable<object>> ApplySelectFields(IQueryable<Product> query, string select)
         {
-            var selectFields = select.Split(',').Select(f => f.Trim().ToLower()).ToHashSet();
+            var fields = select.Split(',').Select(f => f.Trim().ToLower()).ToHashSet();
 
-            // Use static select instead of dynamic string for better type safety
-            if (selectFields.Contains("categoryname") && selectFields.Count == 1)
+            var result = await query.Select(p => new
             {
-                // Only CategoryName requested
-                return await query.Select(p => new { CategoryName = p.Category.Name }).ToListAsync();
-            }
-            else if (selectFields.Contains("name") && selectFields.Count == 1)
+                ProductId = fields.Contains("productid") || fields.Contains("id") ? (int?)p.ProductId : null,
+                Name = fields.Contains("name") ? p.Name : null,
+                Description = fields.Contains("description") ? p.Description : null,
+                Price = fields.Contains("price") ? (decimal?)p.Price : null,
+                IsActive = fields.Contains("isactive") || fields.Contains("active") ? (bool?)p.IsActive : null,
+                CategoryName = fields.Contains("categoryname") || fields.Contains("category") ? p.Category.Name : null
+            }).ToListAsync();
+
+            // Convert to clean objects containing only selected fields
+            return result.Select(item =>
             {
-                // Only Name requested
-                return await query.Select(p => new { Name = p.Name }).ToListAsync();
-            }
-            else if (selectFields.Contains("name") && selectFields.Contains("categoryname") && selectFields.Count == 2)
-            {
-                // Name and CategoryName requested
-                return await query.Select(p => new { 
-                    Name = p.Name, 
-                    CategoryName = p.Category.Name 
-                }).ToListAsync();
-            }
-            else
-            {
-                // Build dynamic select for more complex cases
-                var selectParts = new List<string>();
-
-                if (selectFields.Contains("productid") || selectFields.Contains("id"))
-                    selectParts.Add("ProductId");
-
-                if (selectFields.Contains("name"))
-                    selectParts.Add("Name");
-
-                if (selectFields.Contains("description"))
-                    selectParts.Add("Description");
-
-                if (selectFields.Contains("price"))
-                    selectParts.Add("Price");
-
-                if (selectFields.Contains("isactive") || selectFields.Contains("active"))
-                    selectParts.Add("IsActive");
-
-                if (selectFields.Contains("categoryname"))
-                    selectParts.Add("CategoryName = Category.Name");
-
-                if (selectParts.Count == 0)
-                {
-                    // If no valid fields specified, return all
-                    return await query.Select(p => new
-                    {
-                        ProductId = p.ProductId,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Price = p.Price,
-                        IsActive = p.IsActive,
-                        CategoryName = p.Category.Name
-                    }).ToListAsync();
-                }
-
-                var selectExpression = "new {" + string.Join(", ", selectParts) + "}";
+                var obj = new Dictionary<string, object>();
                 
-                try
-                {
-                    return await query.Select(selectExpression).ToDynamicListAsync();
-                }
-                catch
-                {
-                    // Fallback to static select if dynamic fails
-                    return await query.Select(p => new
-                    {
-                        ProductId = p.ProductId,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Price = p.Price,
-                        IsActive = p.IsActive,
-                        CategoryName = p.Category.Name
-                    }).ToListAsync();
-                }
-            }
+                if (item.ProductId.HasValue) obj["productId"] = item.ProductId.Value;
+                if (item.Name != null) obj["name"] = item.Name;
+                if (item.Description != null) obj["description"] = item.Description;
+                if (item.Price.HasValue) obj["price"] = item.Price.Value;
+                if (item.IsActive.HasValue) obj["isActive"] = item.IsActive.Value;
+                if (item.CategoryName != null) obj["categoryName"] = item.CategoryName;
+                
+                return obj;
+            });
         }
 
         private IQueryable<Product> ApplySorting(IQueryable<Product> query, string orderBy)
