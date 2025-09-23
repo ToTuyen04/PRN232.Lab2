@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
 using System.Text.Json;
+using System.Xml.Serialization;
 
 namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
 {
@@ -83,9 +84,34 @@ namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
                 )
             };
             context.Response.StatusCode = statusCode;
-            await context.Response.WriteAsJsonAsync(response);
 
+            //await context.Response.WriteAsJsonAsync(response);
+            await WriteResponseAsync(context, response);
         }
+
+        private async Task WriteResponseAsync(HttpContext context, ErrorResponse response)
+        {
+            var acceptHeader = context.Request.Headers.Accept.ToString();
+
+            if (acceptHeader.Contains("application/xml") || acceptHeader.Contains("text/xml"))
+            {
+                context.Response.ContentType = "application/xml; charset=utf-8";
+                await WriteXmlAsync(context.Response, response);
+            }
+            else
+            {
+                context.Response.ContentType = "application/json; charset=utf-8";
+                await context.Response.WriteAsJsonAsync(response);
+            }
+        }
+        private async Task WriteXmlAsync<T>(HttpResponse response, T obj)
+        {
+            var serializer = new XmlSerializer(typeof(T));
+            using var writer = new StringWriter();
+            serializer.Serialize(writer, obj);
+            await response.WriteAsync(writer.ToString());
+        }
+
         private static (int StatusCode, ErrorResponse Response) HandleDbUpdateException(DbUpdateException ex)
         {
             var (message, errorCode) = ex.InnerException switch

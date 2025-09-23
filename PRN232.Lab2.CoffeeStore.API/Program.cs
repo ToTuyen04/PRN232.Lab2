@@ -29,11 +29,21 @@ namespace PRN232.Lab2.CoffeeStore.API
 
             builder.Services.AddAutoMapper(typeof(Mapper));
 
-            builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.Converters.Add(new CustomDateTimeConverter());
-                });
+            builder.Services.AddControllers(options =>
+            {
+                //Kích hoạt CONTENT NEGOTIATION
+                options.RespectBrowserAcceptHeader = true;
+                options.ReturnHttpNotAcceptable = true; //RETURN 406 nếu 0 hỗ trợ định dạng trong header Accept
+            })
+            .AddXmlSerializerFormatters() //thêm xml formatter
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new CustomDateTimeConverter());
+                options.JsonSerializerOptions.PropertyNamingPolicy = null; // Giữ PascalCase
+                options.JsonSerializerOptions.WriteIndented = true; // Pretty print JSON
+            })
+            .AddXmlDataContractSerializerFormatters(); //Thêm XML DataContract formatter
+
             //đăng ký xử lý lý validate model
             builder.Services.Configure<ApiBehaviorOptions>(options =>
             {
