@@ -5,6 +5,7 @@ using PRN232.Lab2.CoffeeStore.Repositories.Context;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository;
 using PRN232.Lab2.CoffeeStore.Services;
+using PRN232.Lab2.CoffeeStore.Services.Converters;
 using PRN232.Lab2.CoffeeStore.Services.ExceptionHandler;
 using PRN232.Lab2.CoffeeStore.Services.Mapper;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
@@ -39,6 +40,7 @@ namespace PRN232.Lab2.CoffeeStore.API
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new CustomDateTimeConverter());
+                options.JsonSerializerOptions.Converters.Add(new SelectiveProductResponseConverter());
                 options.JsonSerializerOptions.PropertyNamingPolicy = null; // Giữ PascalCase
                 options.JsonSerializerOptions.WriteIndented = true; // Pretty print JSON
             })

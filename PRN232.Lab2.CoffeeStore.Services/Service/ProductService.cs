@@ -67,30 +67,77 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             return _unitOfWork.Product.GetAll();
         }
 
-        public async Task<Paginated<object>> GetAllAsync(string search, int currentPage, int pageSize, string orderBy, string select)
+        public async Task<Paginated<ProductResponse>> GetAllAsync(string search, int currentPage, int pageSize, string orderBy, string select)
         {
             var (dynamicItems, totalCount) = await _unitOfWork.Product.GetPaginatedAsync(search, currentPage, pageSize, orderBy, select);
 
-            IEnumerable<object> items;
+            IEnumerable<ProductResponse> items;
+            HashSet<string> selectedFields = string.IsNullOrEmpty(select) 
+                ? new HashSet<string>() 
+                : select.Split(',').Select(f => f.Trim().ToLower()).ToHashSet();
 
             if (string.IsNullOrEmpty(select))
             {
+                // Không có field selection -> map Product entities sang ProductResponse đầy đủ
                 var products = (List<Product>)dynamicItems;
-                var productResponses = _mapper.Map<IEnumerable<ProductResponse>>(products);
-                items = productResponses.Cast<object>();
+                items = _mapper.Map<IEnumerable<ProductResponse>>(products);
+                
+                // SelectedFields rỗng -> converter sẽ hiển thị tất cả fields
+            }
+            else
+            {
+                // Có field selection -> convert dynamic objects sang ProductResponse với selected fields
+                var selectedItems = (IEnumerable<object>)dynamicItems;
+                items = ConvertToProductResponse(selectedItems, selectedFields);
             }
 
-            else
-                items = (IEnumerable<object>)dynamicItems;
-
-            return new Paginated<object>
+            return new Paginated<ProductResponse>
             {
                 Items = items,
                 TotalCount = totalCount,
                 CurrentPage = currentPage,
                 PageSize = pageSize,
-                //TotalPage đã tính toán trong Model Paginated<T>
             };
+        }
+
+        private IEnumerable<ProductResponse> ConvertToProductResponse(IEnumerable<object> selectedItems, HashSet<string> selectedFields)
+        {
+            var result = new List<ProductResponse>();
+
+            foreach (var item in selectedItems)
+            {
+                if (item is Dictionary<string, object> dict)
+                {
+                    var response = new ProductResponse
+                    {
+                        SelectedFields = selectedFields // Set selected fields cho JsonConverter
+                    };
+
+                    // Chỉ cần set các properties có trong dictionary
+                    // JsonConverter sẽ chỉ serialize những fields được chọn
+                    if (dict.ContainsKey("productId"))
+                        response.ProductId = Convert.ToInt32(dict["productId"]);
+
+                    if (dict.ContainsKey("name"))
+                        response.Name = dict["name"]?.ToString();
+
+                    if (dict.ContainsKey("description"))
+                        response.Description = dict["description"]?.ToString();
+
+                    if (dict.ContainsKey("price"))
+                        response.Price = Convert.ToDecimal(dict["price"]);
+
+                    if (dict.ContainsKey("isActive"))
+                        response.IsActive = Convert.ToBoolean(dict["isActive"]);
+
+                    if (dict.ContainsKey("categoryName"))
+                        response.CategoryName = dict["categoryName"]?.ToString();
+
+                    result.Add(response);
+                }
+            }
+
+            return result;
         }
 
         public Product GetById(int id)

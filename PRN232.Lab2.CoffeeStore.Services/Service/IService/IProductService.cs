@@ -15,7 +15,7 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service.IService
         Task<ProductResponse> UpdateAsync(int id, ProductRequest obj);
         Task DeleteAsync(Product obj);
         Task<ProductResponse> GetByIdAsync(int id);
-        Task<Paginated<object>> GetAllAsync(string search, int currentPage, int pageSize, string orderBy, string select);
+        Task<Paginated<ProductResponse>> GetAllAsync(string search, int currentPage, int pageSize, string orderBy, string select);
 
 
         void Add(Product obj);

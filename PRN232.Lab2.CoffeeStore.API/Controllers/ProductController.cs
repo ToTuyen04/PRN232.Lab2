@@ -26,7 +26,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
             [FromQuery] int currentPage = 1, [FromQuery] int pageSize = 5)
         {
             var products = await _productService.GetAllAsync(search, currentPage, pageSize, orderBy, select);
-            return Ok(SuccessResponse<Paginated<object>>.Create(products, "Product list retrieved success"));
+            return Ok(SuccessResponse<Paginated<ProductResponse>>.Create(products, "Product list retrieved success"));
         }
 
         [HttpGet("{id}")]
