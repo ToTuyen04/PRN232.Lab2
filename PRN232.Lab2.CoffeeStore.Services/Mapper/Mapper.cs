@@ -20,6 +20,8 @@ namespace PRN232.Lab2.CoffeeStore.Services.Mapper
             //    .ForMember(dest => dest, opt => opt.MapFrom(src => src));
 
             CreateMap<ProductRequest, Product>();
+                //.ForMember(dest => dest.Description, opt => opt.Ignore());
+
         }
     }
 }

@@ -19,7 +19,7 @@ namespace PRN232.Lab2.CoffeeStore.Services.ResponseModel
         [XmlElement("ProductName")]
         public string Name { get; set; }
         
-        [XmlElement("ProductDescription")]
+        [XmlElement("Description")]
         public string Description { get; set; }
         
         [XmlElement("ProductPrice")]

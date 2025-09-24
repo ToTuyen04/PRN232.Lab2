@@ -52,6 +52,8 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Context
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId);
 
+            modelBuilder.Entity<Product>()
+                .Property(p=>p.Description).IsRequired(false);
 
             modelBuilder.Entity<Category>()
                 .HasData(

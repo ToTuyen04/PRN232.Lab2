@@ -63,7 +63,8 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
         {
             var product = _productService.GetById(id);
             await _productService.DeleteAsync(product);
-            return Ok(SuccessResponse<object>.Create("", "Product removed success.")); // 204
+            //return Ok(SuccessResponse<object>.Create("", "Product removed success.")); // 204
+            return NoContent();
         }
     }
 }

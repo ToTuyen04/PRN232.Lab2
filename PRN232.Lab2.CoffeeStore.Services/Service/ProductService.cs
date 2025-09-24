@@ -173,8 +173,13 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             var duplicated = _unitOfWork.Product.Get(p => p.Name == request.Name && p.ProductId != id);
             if (duplicated != null)
                 throw new ExceptionHandler.ValidationException($"Product name '{request.Name}' already exists.");
-
+            
+            string oldDescription = obj.Description;
+            
             _mapper.Map(request, obj);
+            
+            if(string.IsNullOrEmpty(request.Description))
+                obj.Description = oldDescription;
 
             _unitOfWork.Product.Update(obj);
             await _unitOfWork.SaveAsync();
