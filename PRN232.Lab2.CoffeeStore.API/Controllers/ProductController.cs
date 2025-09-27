@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PRN232.Lab2.CoffeeStore.Services.RequestModel;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
 using PRN232.Lab2.CoffeeStore.Services.Service.IService;
@@ -7,6 +8,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
 {
     [ApiController]
     [Route("/api/products")]
+    [Authorize]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -17,7 +19,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
 
             _logger = logger;
         }
-
+        
         [HttpGet]
         public async Task<IActionResult> Get(
             [FromQuery] string? search,
@@ -35,7 +37,8 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
             var product = await _productService.GetByIdAsync(id);
             return Ok(SuccessResponse<ProductResponse>.Create(product, $"Product with id #{id} retrieved success"));
         }
-
+        //[Authorize(Roles ="Admin")]
+        [Authorize(Policy ="AdminPolicy")]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] ProductRequest request)
         {
@@ -47,7 +50,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
                     product,
                     "Product CREATED success."));
         }
-
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] ProductRequest request)
         {
@@ -57,7 +60,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
                 await _productService.UpdateAsync(id, request),
                 "Product UPDATED success."));
         }
-
+        [Authorize(Policy = "AdminPolicy")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

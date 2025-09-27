@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232.Lab2.CoffeeStore.Repositories.Context;
 
@@ -11,9 +12,11 @@ using PRN232.Lab2.CoffeeStore.Repositories.Context;
 namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
 {
     [DbContext(typeof(CoffeeStoreDbContext))]
-    partial class CoffeeStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250924032207_passwordHashinUser")]
+    partial class passwordHashinUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -14,11 +14,13 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Repository
         private readonly CoffeeStoreDbContext _db;
         public IProductRepository Product { get; private set; }
         public ICategoryRepository Category { get; private set; }
+        public IUserRepository User { get; private set; }
         public UnitOfWork(CoffeeStoreDbContext db)
         {
             _db = db;
             Category = new CategoryRepository(_db);
             Product = new ProductRepository(_db);
+            User = new UserRepository(_db);
         }
 
         public void Save()

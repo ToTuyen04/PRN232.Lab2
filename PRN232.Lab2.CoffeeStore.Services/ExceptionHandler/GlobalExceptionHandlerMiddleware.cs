@@ -63,6 +63,11 @@ namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
                     ErrorResponse.Create(ex.Message, "UNAUTHORIZED")
                 ),
 
+                ForbiddenException ex => (
+                    StatusCodes.Status403Forbidden,
+                    ErrorResponse.Create(ex.Message, "FORBIDDEN")
+                ),
+
                 ArgumentNullException ex => (
                     StatusCodes.Status400BadRequest,
                     ErrorResponse.Create(ex.Message, "ARGUMENT_NULL")
@@ -101,7 +106,7 @@ namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
             else
             {
                 context.Response.ContentType = "application/json; charset=utf-8";
-                await context.Response.WriteAsJsonAsync(response);
+                await context.Response.WriteAsJsonAsync(response); // sử dụng JsonSerializerOptions đã cấu hình trong Program.cs
             }
         }
         private async Task WriteXmlAsync<T>(HttpResponse response, T obj)

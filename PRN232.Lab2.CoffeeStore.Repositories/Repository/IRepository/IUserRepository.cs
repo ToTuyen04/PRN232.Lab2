@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 
 namespace PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository
 {
-    public interface IOrderRepository : IRepository<Order>
+    public interface IUserRepository : IRepository<User>
     {
+        void Update(User obj);
+        User GetUserWithEmail(string email);
+        User GetUserWithUsername(string username);
     }
 }

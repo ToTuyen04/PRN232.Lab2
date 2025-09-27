@@ -1,6 +1,9 @@
 ﻿
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PRN232.Lab2.CoffeeStore.Repositories.Context;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository;
 using PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository;
@@ -11,6 +14,8 @@ using PRN232.Lab2.CoffeeStore.Services.Mapper;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
 using PRN232.Lab2.CoffeeStore.Services.Service;
 using PRN232.Lab2.CoffeeStore.Services.Service.IService;
+using Scalar.AspNetCore;
+using System.Text;
 
 namespace PRN232.Lab2.CoffeeStore.API
 {
@@ -27,6 +32,7 @@ namespace PRN232.Lab2.CoffeeStore.API
             });
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddAutoMapper(typeof(Mapper));
 
@@ -41,7 +47,7 @@ namespace PRN232.Lab2.CoffeeStore.API
             {
                 options.JsonSerializerOptions.Converters.Add(new CustomDateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new SelectiveProductResponseConverter());
-                options.JsonSerializerOptions.PropertyNamingPolicy = null; // Giữ PascalCase
+                //options.JsonSerializerOptions.PropertyNamingPolicy = null; // Giữ PascalCase
                 options.JsonSerializerOptions.WriteIndented = true; // Pretty print JSON
             })
             .AddXmlDataContractSerializerFormatters(); //Thêm XML DataContract formatter
@@ -59,6 +65,34 @@ namespace PRN232.Lab2.CoffeeStore.API
                     return new BadRequestObjectResult(errorResponse);
                 };
             });
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                var config = builder.Configuration;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = config["AppSettings:Issuer"],
+                    ValidAudience = config["AppSettings:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["AppSettings:Token"])),
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminPolicy", policy => policy.Requirements.Add(new AdminRoleRequirement()));
+            });
+            builder.Services.AddSingleton<IAuthorizationHandler, AdminRoleHandler>();
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
@@ -73,14 +107,18 @@ namespace PRN232.Lab2.CoffeeStore.API
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                //app.MapScalarApiReference();
             }
 
             app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
+            app.UseMiddleware<AccessTokenOnlyMiddleware>();
             app.UseAuthorization();
-
+            //app.UseMiddleware<ForbiddenResponseMiddleware>();
+            //app.UseCustomStatusCodePages();
 
             app.MapControllers();
 
