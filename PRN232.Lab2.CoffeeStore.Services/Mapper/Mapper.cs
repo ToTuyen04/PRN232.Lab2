@@ -16,15 +16,25 @@ namespace PRN232.Lab2.CoffeeStore.Services.Mapper
         {
             CreateMap<Product, ProductResponse>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
-            //CreateMap<IEnumerable<Product>, IEnumerable<ProductResponse>>()
-            //    .ForMember(dest => dest, opt => opt.MapFrom(src => src));
 
             CreateMap<ProductRequest, Product>();
-                //.ForMember(dest => dest.Description, opt => opt.Ignore());
 
             CreateMap<User, UserResponse>();
             CreateMap<RegisterRequest, User>();
 
+            CreateMap<OrderRequest, Order>()
+                .ForMember(dest => dest.OrderDetails, opt => opt.MapFrom(src=>src.Items));
+            
+            CreateMap<OrderItemRequest, OrderDetail>();
+
+            CreateMap<Order, OrderResponse>()
+                .ForMember(dest => dest.UserResponse, opt => opt.MapFrom(src => src.User))
+                .ForMember(dest => dest.OrderDetailResponses, opt => opt.MapFrom(src => src.OrderDetails))
+                .ForMember(dest => dest.PaymentResponse, opt => opt.MapFrom(src => src.Payment));
+
+            CreateMap<OrderDetail, OrderDetailResponse>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name));
+            CreateMap<Payment, PaymentResponse>();
         }
     }
 }

@@ -15,12 +15,16 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Repository
         public IProductRepository Product { get; private set; }
         public ICategoryRepository Category { get; private set; }
         public IUserRepository User { get; private set; }
+        public IOrderRepository Order { get; private set; }
+        public IPaymentRepository Payment { get; private set; }
         public UnitOfWork(CoffeeStoreDbContext db)
         {
             _db = db;
             Category = new CategoryRepository(_db);
             Product = new ProductRepository(_db);
             User = new UserRepository(_db);
+            Order = new OrderRepository(_db);
+            Payment = new PaymentRepository(_db);
         }
 
         public void Save()

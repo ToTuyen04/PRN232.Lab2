@@ -33,6 +33,8 @@ namespace PRN232.Lab2.CoffeeStore.API
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
+            builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             builder.Services.AddAutoMapper(typeof(Mapper));
 
@@ -85,6 +87,7 @@ namespace PRN232.Lab2.CoffeeStore.API
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["AppSettings:Token"])),
                     ClockSkew = TimeSpan.Zero
                 };
+                JwtBearerEventsConfigurator.Configure(options);
             });
 
             builder.Services.AddAuthorization(options =>

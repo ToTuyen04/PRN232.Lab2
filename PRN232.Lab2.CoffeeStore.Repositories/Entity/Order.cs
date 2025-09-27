@@ -17,6 +17,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Entity
         public User User { get; set; }
 
         public int PaymentID { get; set; }
+        [ForeignKey("PaymentID")]
         public Payment Payment { get; set; }
 
         public ICollection<OrderDetail> OrderDetails { get; set; }

@@ -43,7 +43,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
 
                     b.HasKey("CategoryId");
 
-                    b.ToTable("Category");
+                    b.ToTable("Category", (string)null);
 
                     b.HasData(
                         new
@@ -214,7 +214,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Order");
+                    b.ToTable("Order", (string)null);
                 });
 
             modelBuilder.Entity("PRN232.Lab2.CoffeeStore.Repositories.Entity.OrderDetail", b =>
@@ -243,7 +243,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetail");
+                    b.ToTable("OrderDetail", (string)null);
                 });
 
             modelBuilder.Entity("PRN232.Lab2.CoffeeStore.Repositories.Entity.Payment", b =>
@@ -272,7 +272,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Payment");
+                    b.ToTable("Payment", (string)null);
                 });
 
             modelBuilder.Entity("PRN232.Lab2.CoffeeStore.Repositories.Entity.Product", b =>
@@ -303,7 +303,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Product");
+                    b.ToTable("Product", (string)null);
 
                     b.HasData(
                         new
@@ -514,7 +514,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("User");
+                    b.ToTable("User", (string)null);
                 });
 
             modelBuilder.Entity("PRN232.Lab2.CoffeeStore.Repositories.Entity.Order", b =>
