@@ -13,6 +13,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Repository.IRepository
         public IUserRepository User { get; }
         public IOrderRepository Order { get; }
         public IPaymentRepository Payment { get; }
+        public IOrderDetailRepository OrderDetail { get; }
 
         Task SaveAsync();
         void Save();

@@ -18,8 +18,8 @@ namespace PRN232.Lab2.CoffeeStore.Services.ResponseModel
         public DateTime OrderDate { get; set; }
         [XmlElement("Status")]
         public string Status { get; set; }
-        [XmlElement("UserId")]
-        public string UserId { get; set; }
+        //[XmlElement("UserId")]
+        //public string UserId { get; set; }
         [XmlElement("UserResponse")]
         public UserResponse UserResponse { get; set; }
         [XmlElement("PaymentResponse")]

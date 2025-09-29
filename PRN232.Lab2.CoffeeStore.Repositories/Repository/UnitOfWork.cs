@@ -17,6 +17,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Repository
         public IUserRepository User { get; private set; }
         public IOrderRepository Order { get; private set; }
         public IPaymentRepository Payment { get; private set; }
+        public IOrderDetailRepository OrderDetail { get; private set; }
         public UnitOfWork(CoffeeStoreDbContext db)
         {
             _db = db;
@@ -25,6 +26,7 @@ namespace PRN232.Lab2.CoffeeStore.Repositories.Repository
             User = new UserRepository(_db);
             Order = new OrderRepository(_db);
             Payment = new PaymentRepository(_db);
+            OrderDetail = new OrderDetailRepository(_db);
         }
 
         public void Save()

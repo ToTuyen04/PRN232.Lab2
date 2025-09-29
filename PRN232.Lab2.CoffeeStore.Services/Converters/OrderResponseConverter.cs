@@ -41,8 +41,8 @@ namespace PRN232.Lab2.CoffeeStore.Services.Converters
             if (!string.IsNullOrEmpty(value.Status))
                 writer.WriteString("status", value.Status);
 
-            if (!string.IsNullOrEmpty(value.UserId))
-                writer.WriteString("userId", value.UserId);
+            //if (!string.IsNullOrEmpty(value.UserId))
+            //    writer.WriteString("userId", value.UserId);
 
             if (value.UserResponse != null)
             {
@@ -74,8 +74,8 @@ namespace PRN232.Lab2.CoffeeStore.Services.Converters
             if (value.SelectedFields.Contains("status") && !string.IsNullOrEmpty(value.Status))
                 writer.WriteString("status", value.Status);
 
-            if (value.SelectedFields.Contains("userid") && !string.IsNullOrEmpty(value.UserId))
-                writer.WriteString("userId", value.UserId);
+            //if (value.SelectedFields.Contains("userid") && !string.IsNullOrEmpty(value.UserId))
+            //    writer.WriteString("userId", value.UserId);
 
             if ((value.SelectedFields.Contains("user") || value.SelectedFields.Contains("userresponse")) && value.UserResponse != null)
             {

@@ -9,17 +9,12 @@ using System.Threading.Tasks;
 
 namespace PRN232.Lab2.CoffeeStore.Repositories.Repository
 {
-    public class PaymentRepository : Repository<Payment>, IPaymentRepository
+    public class OrderDetailRepository : Repository<OrderDetail>, IOrderDetailRepository
     {
         private readonly CoffeeStoreDbContext _db;
-        public PaymentRepository(CoffeeStoreDbContext db) : base(db)
+        public OrderDetailRepository(CoffeeStoreDbContext db) : base(db)
         {
             _db = db;
-        }
-
-        public void Update(Payment payment)
-        {
-           _db.Payment.Update(payment);
         }
     }
 }

@@ -143,6 +143,7 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
 
         // Giữ nguyên return type là Paginated<OrderResponse>
         public async Task<Paginated<OrderResponse>> GetAllOrdersAsync(
+            string userId,
             string username,
             string paymentMethod,
             string select,
@@ -154,6 +155,10 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             var filteredOrders = string.IsNullOrEmpty(username)
                 ? orders
                 : orders.Where(o => o.User.UserName.Contains(username, StringComparison.OrdinalIgnoreCase));
+
+            filteredOrders = string.IsNullOrEmpty(userId)
+                ? filteredOrders
+                : filteredOrders.Where(o => o.UserId.Equals(userId, StringComparison.OrdinalIgnoreCase));
 
             filteredOrders = string.IsNullOrEmpty(paymentMethod)
                 ? filteredOrders
@@ -241,25 +246,116 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             return orderedOrders ?? orders;
         }
 
-        // Helper method for field selection
-        private IEnumerable<OrderResponse> ApplySelection(IEnumerable<OrderResponse> orders, string select)
+        public async Task<OrderResponse> UpdateOrderAsync(int orderId, OrderRequest request)
         {
-            var selectedFields = select.Split(',').Select(f => f.Trim().ToLower()).ToList();
+            // Kiểm tra order có tồn tại không
+            var existingOrder = await _unitOfWork.Order.GetAsync(o => o.OrderId == orderId);
+            if (existingOrder == null)
+                throw new NotFoundException($"Order with id {orderId} not found");
 
-            // If no valid fields specified, return all
-            if (!selectedFields.Any())
-                return orders;
+            // Kiểm tra order status - chỉ cho phép update order có status PENDING
+            if (existingOrder.Status != OrderStatus.PENDING.ToString())
+                throw new BadRequestException($"Cannot update order with status {existingOrder.Status}. Only PENDING orders can be updated.");
 
-            return orders.Select(order => new OrderResponse
+            // Validate user exists
+            if (await _unitOfWork.User.GetAsync(u => u.UserId == request.UserId) == null)
+                throw new NotFoundException($"User with id {request.UserId} not found");
+
+            // Validate payment method
+            if (!Enum.TryParse<PaymentMethod>(request.PaymentMethod, true, out var method)
+                || !Enum.IsDefined(typeof(PaymentMethod), method))
+                throw new BadRequestException($"Payment method {request.PaymentMethod} is not valid");
+
+            // Validate products and quantities
+            foreach (var item in request.Items)
             {
-                OrderId = selectedFields.Contains("orderid") ? order.OrderId : 0,
-                OrderDate = selectedFields.Contains("orderdate") ? order.OrderDate : DateTime.MinValue,
-                Status = selectedFields.Contains("status") ? order.Status : null,
-                UserId = selectedFields.Contains("userid") ? order.UserId : null,
-                UserResponse = selectedFields.Contains("user") || selectedFields.Contains("userresponse") ? order.UserResponse : null,
-                PaymentResponse = selectedFields.Contains("payment") || selectedFields.Contains("paymentresponse") ? order.PaymentResponse : null,
-                OrderDetailResponses = selectedFields.Contains("orderdetails") || selectedFields.Contains("orderdetailresponses") ? order.OrderDetailResponses : null
-            });
+                if (await _unitOfWork.Product.GetAsync(p => p.ProductId == item.ProductId) == null)
+                    throw new NotFoundException($"Product with id {item.ProductId} not found");
+                if (item.Quantity <= 0)
+                    throw new BadRequestException($"Quantity must be greater than 0");
+            }
+
+            // Update order basic information
+            existingOrder.UserId = request.UserId;
+            // Keep the original OrderDate, don't update it
+            // existingOrder.OrderDate = DateTime.Now; // Comment this out to keep original date
+
+            // Remove existing order details
+            var existingOrderDetails = existingOrder.OrderDetails?.ToList();
+            if (existingOrderDetails != null && existingOrderDetails.Any())
+            {
+                foreach (var detail in existingOrderDetails)
+                {
+                    _unitOfWork.OrderDetail.Remove(detail);
+                }
+            }
+
+            // Add new order details
+            var newOrderDetails = new List<OrderDetail>();
+            foreach (var item in request.Items)
+            {
+                var product = await _unitOfWork.Product.GetAsync(p => p.ProductId == item.ProductId);
+                var orderDetail = new OrderDetail
+                {
+                    OrderId = orderId,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    UnitPrice = product.Price
+                };
+                newOrderDetails.Add(orderDetail);
+                await _unitOfWork.OrderDetail.AddAsync(orderDetail);
+            }
+
+            // Update order details reference
+            existingOrder.OrderDetails = newOrderDetails;
+
+            // Calculate new total amount
+            var totalAmount = newOrderDetails.Sum(od => od.Quantity * od.UnitPrice);
+
+            // Update payment information
+            var existingPayment = await _unitOfWork.Payment.GetAsync(p => p.PaymentId == existingOrder.PaymentID);
+            if (existingPayment != null)
+            {
+                existingPayment.PaymentMethod = method.ToString();
+                existingPayment.PaymentDate = DateTime.Now; // Update payment date to current time
+                existingPayment.Amount = totalAmount;
+                _unitOfWork.Payment.Update(existingPayment);
+            }
+            else
+            {
+                // If payment doesn't exist (edge case), create new one
+                var newPayment = new Payment
+                {
+                    PaymentMethod = method.ToString(),
+                    PaymentDate = DateTime.Now,
+                    Amount = totalAmount,
+                    Order = existingOrder
+                };
+                await _unitOfWork.Payment.AddAsync(newPayment);
+                existingOrder.PaymentID = newPayment.PaymentId;
+            }
+
+            // Update the order
+            _unitOfWork.Order.Update(existingOrder);
+            await _unitOfWork.SaveAsync();
+
+            // Return updated order with all related data
+            var updatedOrder = await _unitOfWork.Order.GetAsync(o => o.OrderId == orderId);
+            return _mapper.Map<OrderResponse>(updatedOrder);
+        }
+
+        public async Task DeleteAsync(Order obj)
+        {
+            _unitOfWork.Order.Remove(obj);
+            await _unitOfWork.SaveAsync();
+        }
+
+        public Order GetById(int id)
+        {
+            var order = _unitOfWork.Order.Get(o => o.OrderId == id);
+            if (order == null)
+                throw new NotFoundException($"Order with id #{id} not found");
+            return order;
         }
     }
 }

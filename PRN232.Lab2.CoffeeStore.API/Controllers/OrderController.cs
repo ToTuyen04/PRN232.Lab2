@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PRN232.Lab2.CoffeeStore.Services.RequestModel;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
+using PRN232.Lab2.CoffeeStore.Services.Service;
 using PRN232.Lab2.CoffeeStore.Services.Service.IService;
 
 namespace PRN232.Lab2.CoffeeStore.API.Controllers
@@ -18,7 +19,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
             _orderService = orderService;
             _logger = logger;
         }
-
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id,[FromBody] OrderUpdateStatusRequest request)
         {
@@ -35,6 +36,7 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> Get(
+            [FromQuery] string? userId,
             [FromQuery] string? username, 
             [FromQuery] string? paymentMethod, 
             [FromQuery] string? select, 
@@ -42,10 +44,10 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
             [FromQuery] int currentPage = 1, 
             [FromQuery] int pageSize = 5)
         {
-            var orders = await _orderService.GetAllOrdersAsync(username, paymentMethod, select, orderBy, currentPage, pageSize);
+            var orders = await _orderService.GetAllOrdersAsync(userId, username, paymentMethod, select, orderBy, currentPage, pageSize);
             return Ok(SuccessResponse<Paginated<OrderResponse>>.Create(orders, "Get orders success."));
         }
-
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] OrderRequest request)
         {
@@ -54,6 +56,23 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
                 nameof(Post),
                 new { id = order.OrderId },
                 SuccessResponse<OrderResponse>.Create(order, "Order placed success."));
+        }
+
+        [Authorize(Policy = "AdminPolicy")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody] OrderRequest request)
+        {
+            var order = await _orderService.UpdateOrderAsync(id, request);
+            return Ok(SuccessResponse<OrderResponse>.Create(order, "Update order success."));
+        }
+
+        [Authorize(Policy = "AdminPolicy")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var order = _orderService.GetById(id);
+            await _orderService.DeleteAsync(order);
+            return NoContent();
         }
     }
 }
