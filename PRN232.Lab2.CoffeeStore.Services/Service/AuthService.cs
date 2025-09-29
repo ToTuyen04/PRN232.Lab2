@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -23,14 +24,25 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly ITokenBlacklistService _blacklistService;
 
-        public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration)
+        public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, ITokenBlacklistService blacklistService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _configuration = configuration;
+            _blacklistService = blacklistService;
         }
 
+        public async Task LogoutAsync(LogoutRequest request)
+        {
+            if (string.IsNullOrEmpty(request.AccessToken))
+                throw new BadRequestException("Refresh token required");
+
+            await _blacklistService.AddToBlacklistAsync(GetJti(request.AccessToken), TimeSpan.FromHours(1));
+            await _blacklistService.AddToBlacklistAsync(GetJti(request.RefreshToken), TimeSpan.FromHours(2));
+        }
+        
         public async Task<AuthenResponse> LoginAsync(AuthenRequest request)
         {
             var user = _unitOfWork.User.GetUserWithEmail(request.Email);
@@ -107,7 +119,7 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
             var newRefreshToken = GenerateToken(user, isRefresh: true);
             return new AuthenResponse
             {
-                User = _mapper.Map<UserResponse>(user),
+                //User = _mapper.Map<UserResponse>(user),
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshToken
             };
@@ -141,7 +153,8 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.NameIdentifier, user.UserId),
                 new Claim(ClaimTypes.Role, user.Role),
-                new Claim("token_type", isRefresh ? "refresh" : "access")
+                new Claim("token_type", isRefresh ? "refresh" : "access"),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("AppSettings:Token")));
@@ -156,6 +169,16 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service
                 signingCredentials: creds
                 ); 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        }
+
+        private string GetJti(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwt = tokenHandler.ReadJwtToken(token);
+            var jti = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
+            if (jti == null)
+                throw new UnauthorizedAccessException("Jti is null!");
+            return jti;
         }
             
     }

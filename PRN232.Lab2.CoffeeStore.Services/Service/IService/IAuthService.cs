@@ -14,5 +14,6 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service.IService
         Task<UserResponse?> RegisterAsync(RegisterRequest request);
         Task<AuthenResponse> LoginAsync(AuthenRequest request);
         Task<AuthenResponse> RefreshTokenAsync(RefreshTokenRequest request);
+        Task LogoutAsync(LogoutRequest request);
     }
 }

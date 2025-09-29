@@ -1,4 +1,5 @@
 ﻿
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
 using PRN232.Lab2.CoffeeStore.Services.Service;
 using PRN232.Lab2.CoffeeStore.Services.Service.IService;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 using System.Text;
 
 namespace PRN232.Lab2.CoffeeStore.API
@@ -24,6 +26,29 @@ namespace PRN232.Lab2.CoffeeStore.API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            //Load environment variables from .env file
+            // .Env cùng cấp với solution nên phải dẫn .env từ ngoài vào project API
+            Env.Load("../.env");
+
+            //Load Redis configuration from .env file
+            var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST");
+            var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT");
+            var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
+            var redisDatabase = Environment.GetEnvironmentVariable("REDIS_DATABASE");
+
+            var redisConfig = new ConfigurationOptions
+            {
+                EndPoints = { $"{redisHost}:{redisPort}" },
+                Password = $"{redisPassword}",
+                DefaultDatabase = int.Parse($"{redisDatabase}"),
+                //Ssl = true, không yêu cầu tls
+                AbortOnConnectFail = false
+            };
+
+            // Add connection multiplexer
+            var redis = ConnectionMultiplexer.Connect(redisConfig);
+            builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
             // Add services to the container.
             builder.Services.AddDbContext<CoffeeStoreDbContext>(options =>
@@ -35,6 +60,7 @@ namespace PRN232.Lab2.CoffeeStore.API
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+            builder.Services.AddScoped<ITokenBlacklistService, TokenBlacklistService>();
 
             builder.Services.AddAutoMapper(typeof(Mapper));
 

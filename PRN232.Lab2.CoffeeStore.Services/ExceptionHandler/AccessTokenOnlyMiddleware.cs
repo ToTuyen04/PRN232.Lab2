@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using PRN232.Lab2.CoffeeStore.Services.Helpers;
 using PRN232.Lab2.CoffeeStore.Services.ResponseModel;
+using PRN232.Lab2.CoffeeStore.Services.Service.IService;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using System.IO;
-using Microsoft.AspNetCore.Mvc;
-using PRN232.Lab2.CoffeeStore.Services.Helpers;
 
 namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
 {
@@ -22,40 +24,86 @@ namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
             _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, ITokenBlacklistService blacklistService)
         {
 
+            // Kiểm tra token blacklist trước khi kiểm tra token type
             //var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 
-            //if (string.IsNullOrWhiteSpace(authHeader))
+            //if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer "))
             //{
-            //    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //    var token = authHeader.Substring("Bearer ".Length);
 
-            //    var errorResponse = ErrorResponse.Create(
-            //        "Access token is required.",
-            //        "UNAUTHORIZED"
-            //    );
-            //    await HelperClass.WriteErrorResponseAsync(context, errorResponse, _jsonOptions);
+            //    try
+            //    {
+            //        // Extract JTI từ token
+            //        var tokenHandler = new JwtSecurityTokenHandler();
+            //        var jwt = tokenHandler.ReadJwtToken(token);
+            //        var jti = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
 
-                //var acceptHeader = context.Request.Headers.Accept.ToString();
+            //        if (!string.IsNullOrEmpty(jti))
+            //        {
+            //            // Kiểm tra token có bị blacklist không
+            //            if (await blacklistService.IsBlacklistedAsync(jti))
+            //            {
+            //                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 
-                //if (acceptHeader.Contains("application/xml") || acceptHeader.Contains("text/xml"))
-                //{
-                //    context.Response.ContentType = "application/xml; charset=utf-8";
-                //    var serializer = new XmlSerializer(typeof(ErrorResponse));
-                //    using var writer = new StringWriter();
-                //    serializer.Serialize(writer, errorResponse);
-                //    await context.Response.WriteAsync(writer.ToString());
-                //}
-                //else
-                //{
-                //    context.Response.ContentType = "application/json; charset=utf-8";
-                //    var json = JsonSerializer.Serialize(errorResponse, _jsonOptions);
-                //    await context.Response.WriteAsync(json);
-                //}
-                //return;
+            //                var errorResponse = ErrorResponse.Create(
+            //                    "Token has been invalidated.",
+            //                    "TOKEN_BLACKLISTED"
+            //                );
+
+            //                await HelperClass.WriteErrorResponseAsync(context, errorResponse, _jsonOptions);
+            //                return;
+            //            }
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        // Log lỗi nếu cần, nhưng không block request
+            //        // Để JWT middleware xử lý token không hợp lệ
+            //        Console.WriteLine($"Error checking token blacklist: {ex.Message}");
+            //    }
             //}
 
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer "))
+            {
+                var token = authHeader.Substring("Bearer ".Length);
+
+                try
+                {
+                    // Đọc JWT và lấy JTI
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var jwt = tokenHandler.ReadJwtToken(token);
+                    var jti = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
+
+                    if (!string.IsNullOrEmpty(jti))
+                    {
+                        // Kiểm tra JTI có bị blacklist không
+                        if (await blacklistService.IsBlacklistedAsync(jti))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                            var errorResponse = ErrorResponse.Create(
+                                "Token has been invalidated.",
+                                "TOKEN_BLACKLISTED"
+                            );
+
+                            await HelperClass.WriteErrorResponseAsync(context, errorResponse, _jsonOptions);
+                            return;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log lỗi nếu cần, không block request
+                    Console.WriteLine($"Error checking token blacklist: {ex.Message}");
+                }
+            }
+
+            //Kiểm tra loại token truyền vào Header phải là access token
             if (context.User.Identity?.IsAuthenticated == true)
             {
                 var tokenType = context.User.Claims.FirstOrDefault(c => c.Type == "token_type")?.Value;
@@ -71,21 +119,6 @@ namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
                     var acceptHeader = context.Request.Headers.Accept.ToString();
                     await HelperClass.WriteErrorResponseAsync(context, errorResponse, _jsonOptions);
 
-                    //if (acceptHeader.Contains("application/xml") || acceptHeader.Contains("text/xml"))
-                    //{
-                    //    context.Response.ContentType = "application/xml; charset=utf-8";
-                    //    var serializer = new XmlSerializer(typeof(ErrorResponse));
-                    //    using var writer = new StringWriter();
-                    //    serializer.Serialize(writer, errorResponse);
-                    //    await context.Response.WriteAsync(writer.ToString());
-                    //}
-                    //else
-                    //{
-                    //    context.Response.ContentType = "application/json; charset=utf-8";
-                    //    var json = JsonSerializer.Serialize(errorResponse, _jsonOptions);
-                    //    await context.Response.WriteAsync(json);
-                    //}
-                    //return;
                 }
             }
             await _next(context);

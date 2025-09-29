@@ -8,11 +8,11 @@ using System.Xml.Serialization;
 
 namespace PRN232.Lab2.CoffeeStore.Services.ResponseModel
 {
-    [XmlRoot("SuccessResponse")]
+    //[XmlRoot("SuccessResponse")]
     public class SuccessResponse<T> : ApiResponse
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [XmlElement("Data")]
+        //[XmlElement("Data")]
         public T Data { get; set; }
         private SuccessResponse() { }
 

@@ -3,14 +3,10 @@ using System.Xml.Serialization;
 
 namespace PRN232.Lab2.CoffeeStore.Services.ResponseModel
 {
-    [XmlRoot("ErrorResponse")]
     public class ErrorResponse : ApiResponse
     {
-        [XmlElement("ErrorCode")]
         public string ErrorCode { get; set; }
 
-        [XmlArray("ValidationErrors")]
-        [XmlArrayItem("Error")]
         public List<ValidationError> ValidationErrors { get; set; }
 
         private ErrorResponse() { }
@@ -49,13 +45,10 @@ namespace PRN232.Lab2.CoffeeStore.Services.ResponseModel
         }
     }
 
-    [XmlRoot("ValidationError")]
     public class ValidationError
     {
-        [XmlElement("Field")]
         public string Field { get; set; }
 
-        [XmlElement("Message")]
         public string Message { get; set; }
     }
 }
