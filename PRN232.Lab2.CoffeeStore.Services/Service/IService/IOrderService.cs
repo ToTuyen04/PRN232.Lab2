@@ -12,6 +12,13 @@ namespace PRN232.Lab2.CoffeeStore.Services.Service.IService
     {
         Task<OrderResponse> GetOrderByIdAsync(int orderId);
         Task<IEnumerable<OrderResponse>> GetAllOrdersAsync();
+        Task<Paginated<OrderResponse>> GetAllOrdersAsync(
+            string username, 
+            string paymentMethod, 
+            string select, 
+            string orderBy, 
+            int currentPage, 
+            int pageSize);
         Task<OrderResponse> UpdateOrderStatusAsync(int orderId, OrderUpdateStatusRequest request);
         Task<OrderResponse> PlaceOrderAsync(OrderRequest request);
     }

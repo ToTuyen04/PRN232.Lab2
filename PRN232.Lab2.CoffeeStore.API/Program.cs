@@ -49,6 +49,7 @@ namespace PRN232.Lab2.CoffeeStore.API
             {
                 options.JsonSerializerOptions.Converters.Add(new CustomDateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new SelectiveProductResponseConverter());
+                options.JsonSerializerOptions.Converters.Add(new OrderResponseConverter());
                 //options.JsonSerializerOptions.PropertyNamingPolicy = null; // Giữ PascalCase
                 options.JsonSerializerOptions.WriteIndented = true; // Pretty print JSON
             })

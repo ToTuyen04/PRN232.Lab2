@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -26,6 +27,9 @@ namespace PRN232.Lab2.CoffeeStore.Services.ResponseModel
         [XmlArray("OrderDetail")]
         [XmlArrayItem("OrderDetailItem")]
         public ICollection<OrderDetailResponse> OrderDetailResponses { get; set; }
+        [JsonIgnore]
+        [XmlIgnore]
+        public HashSet<string> SelectedFields { get; set; } = new HashSet<string>();
     }
 
     [XmlRoot("OrderDetailResponse")]

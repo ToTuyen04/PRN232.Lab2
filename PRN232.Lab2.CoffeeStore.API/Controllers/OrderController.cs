@@ -34,10 +34,16 @@ namespace PRN232.Lab2.CoffeeStore.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(
+            [FromQuery] string? username, 
+            [FromQuery] string? paymentMethod, 
+            [FromQuery] string? select, 
+            [FromQuery] string? orderBy, 
+            [FromQuery] int currentPage = 1, 
+            [FromQuery] int pageSize = 5)
         {
-            var orders = await _orderService.GetAllOrdersAsync();
-            return Ok(SuccessResponse<IEnumerable<OrderResponse>>.Create(orders, "Get orders success."));
+            var orders = await _orderService.GetAllOrdersAsync(username, paymentMethod, select, orderBy, currentPage, pageSize);
+            return Ok(SuccessResponse<Paginated<OrderResponse>>.Create(orders, "Get orders success."));
         }
 
         [HttpPost]
