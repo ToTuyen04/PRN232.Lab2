@@ -35,13 +35,13 @@ namespace PRN232.Lab2.CoffeeStore.API
             var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST");
             var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT");
             var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
-            var redisDatabase = Environment.GetEnvironmentVariable("REDIS_DATABASE");
+            var redisDatabase = Environment.GetEnvironmentVariable("REDIS_DATABASE") ?? "0";
 
             var redisConfig = new ConfigurationOptions
             {
                 EndPoints = { $"{redisHost}:{redisPort}" },
                 Password = $"{redisPassword}",
-                DefaultDatabase = int.Parse($"{redisDatabase}"),
+                DefaultDatabase = !string.IsNullOrEmpty(redisDatabase) ? int.Parse(redisDatabase) : 0,
                 //Ssl = true, không yêu cầu tls
                 AbortOnConnectFail = false
             };

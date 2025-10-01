@@ -1,0 +1,36 @@
+services:
+  prn232.lab2.coffeestore.api:
+    image: ${DOCKER_REGISTRY-}prn232lab2coffeestoreapi
+    build:
+      context: .
+      dockerfile: PRN232.Lab2.CoffeeStore.API/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      - sqlserver
+    networks:
+      - coffeestore-network
+    restart: on-failure
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "Tuyen12345@"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlvolume:/var/opt/mssql
+    networks:
+      - coffeestore-network
+
+networks:
+  coffeestore-network:
+    driver: bridge
+
+volumes:
+  sqlvolume:
