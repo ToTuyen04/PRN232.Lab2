@@ -130,6 +130,11 @@ namespace PRN232.Lab2.CoffeeStore.API
                 c.SchemaFilter<CustomDateTimeSchemaFilter>();
             });
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(8080); // Chỉ bật HTTP ở Production/Docker
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

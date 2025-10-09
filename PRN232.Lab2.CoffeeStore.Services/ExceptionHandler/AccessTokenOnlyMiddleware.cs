@@ -27,45 +27,6 @@ namespace PRN232.Lab2.CoffeeStore.Services.ExceptionHandler
         public async Task InvokeAsync(HttpContext context, ITokenBlacklistService blacklistService)
         {
 
-            // Kiểm tra token blacklist trước khi kiểm tra token type
-            //var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-
-            //if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer "))
-            //{
-            //    var token = authHeader.Substring("Bearer ".Length);
-
-            //    try
-            //    {
-            //        // Extract JTI từ token
-            //        var tokenHandler = new JwtSecurityTokenHandler();
-            //        var jwt = tokenHandler.ReadJwtToken(token);
-            //        var jti = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
-
-            //        if (!string.IsNullOrEmpty(jti))
-            //        {
-            //            // Kiểm tra token có bị blacklist không
-            //            if (await blacklistService.IsBlacklistedAsync(jti))
-            //            {
-            //                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-
-            //                var errorResponse = ErrorResponse.Create(
-            //                    "Token has been invalidated.",
-            //                    "TOKEN_BLACKLISTED"
-            //                );
-
-            //                await HelperClass.WriteErrorResponseAsync(context, errorResponse, _jsonOptions);
-            //                return;
-            //            }
-            //        }
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        // Log lỗi nếu cần, nhưng không block request
-            //        // Để JWT middleware xử lý token không hợp lệ
-            //        Console.WriteLine($"Error checking token blacklist: {ex.Message}");
-            //    }
-            //}
-
             var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 
             if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer "))
